@@ -12,7 +12,7 @@ if uploaded_file is not None:
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-    st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), caption="原图", use_column_width=True)
+    st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), caption="原图", use_container_width=True)
 
     # 颜色检测（示例红色）
     st.subheader("轮廓检测结果")
@@ -30,5 +30,6 @@ if uploaded_file is not None:
             cv2.rectangle(result_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
             st.write(f"轮廓 {i+1} 面积: {area:.0f} px²")
 
-    st.image(cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB), caption="检测结果", use_column_width=True)
+    st.image(cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB), caption="检测结果", use_container_width=True)
+
 
