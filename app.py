@@ -1,52 +1,34 @@
 import cv2
 import numpy as np
-import tkinter as tk
-from tkinter import filedialog
+import streamlit as st
 
-def capture_image():
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("无法打开摄像头")
-        return None
-    ret, frame = cap.read()
-    cap.release()
-    if ret:
-        return frame
-    else:
-        print("拍照失败")
-        return None
+st.title("颜色轮廓检测与面积测量")
 
-def process_image(image):
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    # 设置颜色范围（这里示例红色）
+# 上传图片
+uploaded_file = st.file_uploader("上传图片（JPG/PNG）", type=["jpg","png"])
+
+if uploaded_file is not None:
+    # 将上传文件转换为 OpenCV 图片
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
+    st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), caption="原图", use_column_width=True)
+
+    # 颜色检测（示例红色）
+    st.subheader("轮廓检测结果")
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lower = np.array([0, 50, 50])
     upper = np.array([10, 255, 255])
     mask = cv2.inRange(hsv, lower, upper)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    for cnt in contours:
+    result_img = img.copy()
+    for i, cnt in enumerate(contours):
         area = cv2.contourArea(cnt)
-        if area > 100:
+        if area > 100:  # 忽略太小的轮廓
             x, y, w, h = cv2.boundingRect(cnt)
-            cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.putText(image, f"Area: {area:.0f}", (x, y-10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    return image
+            cv2.rectangle(result_img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            st.write(f"轮廓 {i+1} 面积: {area:.0f} px²")
 
-def save_image(image):
-    root = tk.Tk()
-    root.withdraw()
-    save_path = filedialog.asksaveasfilename(defaultextension=".jpg",
-                                             filetypes=[("JPEG files","*.jpg"),("PNG files","*.png")])
-    if save_path:
-        cv2.imwrite(save_path, image)
-        print(f"图像已保存到: {save_path}")
+    st.image(cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB), caption="检测结果", use_column_width=True)
 
-if __name__ == "__main__":
-    img = capture_image()
-    if img is not None:
-        processed_img = process_image(img)
-        cv2.imshow("Result", processed_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        save_image(processed_img)
