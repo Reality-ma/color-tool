@@ -1,16 +1,14 @@
-# Streamlit 颜色轮廓检测工具
+# 多区域颜色选择与分区面积比例计算 (HSV)
 
-## 功能
-- 上传 JPG/PNG 图片
-- 交互式 HSV 滑条选择颜色范围
-- 保留所选颜色区域
-- 检测轮廓并显示每个轮廓面积（px²）
-- 显示总保留面积
-- 在网页端显示处理后图像
+一个基于 Streamlit 的交互式工具，可以：
+- 上传图片
+- 通过 HSV 区间选择多个颜色范围
+- 计算各区间面积比例
+- 自动生成饼图可视化
+- 打包下载结果（原图、掩膜、结果图、统计文件、饼图）
 
 ## 使用方法
-
-1. 安装依赖：
-```bash
-pip install -r requirements.txt
-
+1. 克隆仓库：
+   ```bash
+   git clone https://github.com/yourname/color-tool.git
+   cd color-tool
