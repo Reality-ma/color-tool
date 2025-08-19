@@ -4,7 +4,7 @@ import streamlit as st
 import io, zipfile
 import matplotlib.pyplot as plt
 
-st.title("多区域颜色识别与分区面积比例计算 (HSV)")
+st.title("多区域颜色选择与分区面积比例计算 (HSV)")
 
 # 上传图像
 uploaded_file = st.file_uploader("上传一张图片", type=["jpg", "png", "jpeg"])
@@ -21,7 +21,7 @@ if uploaded_file:
     num_ranges = st.number_input("选择颜色区间数量", min_value=1, max_value=5, value=1, step=1)
 
     total_mask = np.zeros(image.shape[:2], dtype=np.uint8)
-    stats = []  # 存储每个区间的比例
+    stats = []
 
     for i in range(num_ranges):
         st.markdown(f"### 区间 {i+1}")
@@ -38,7 +38,7 @@ if uploaded_file:
         mask = cv2.inRange(hsv, lower, upper)
         total_mask = cv2.bitwise_or(total_mask, mask)
 
-        # 单个区间比例
+        # 单个比例
         total_pixels = image.shape[0] * image.shape[1]
         selected_pixels = np.sum(mask > 0)
         ratio = (selected_pixels / total_pixels) * 100
@@ -47,7 +47,6 @@ if uploaded_file:
     # 合并结果
     result = cv2.bitwise_and(image, image, mask=total_mask)
 
-    # 总比例
     selected_pixels_total = np.sum(total_mask > 0)
     ratio_total = (selected_pixels_total / (image.shape[0]*image.shape[1])) * 100
     ratio_str = f"{ratio_total:.2f}"
@@ -63,7 +62,7 @@ if uploaded_file:
     for name, ratio, l, u in stats:
         st.write(f"{name}: 占比 {ratio:.2f}% (H={l[0]}-{u[0]}, S={l[1]}-{u[1]}, V={l[2]}-{u[2]})")
 
-    # 绘制饼图
+    # 饼图
     st.subheader("分区比例饼图")
     labels = [name for name, ratio, _, _ in stats if ratio > 0]
     values = [ratio for _, ratio, _, _ in stats if ratio > 0]
@@ -74,7 +73,6 @@ if uploaded_file:
         ax.axis("equal")
         st.pyplot(fig)
 
-        # 保存饼图到内存
         chart_buffer = io.BytesIO()
         fig.savefig(chart_buffer, format="png")
         chart_img = chart_buffer.getvalue()
@@ -85,26 +83,22 @@ if uploaded_file:
     if st.button("打包下载 ZIP"):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w") as zipf:
-            # 原图
             _, img_bytes = cv2.imencode(".png", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
             zipf.writestr("original.png", img_bytes.tobytes())
 
-            # 掩膜
             mask_bgr = cv2.cvtColor(total_mask, cv2.COLOR_GRAY2BGR)
             _, mask_png = cv2.imencode(".png", mask_bgr)
             zipf.writestr(f"mask_total_{ratio_str}%.png", mask_png.tobytes())
 
-            # 结果图
             _, result_png = cv2.imencode(".png", cv2.cvtColor(result, cv2.COLOR_RGB2BGR))
             zipf.writestr(f"result_total_{ratio_str}%.png", result_png.tobytes())
 
-            # 信息文件
             info_text = f"总选中区域占比: {ratio_str}%\n\n"
             for name, ratio, l, u in stats:
                 info_text += f"{name}: 占比 {ratio:.2f}% (H={l[0]}-{u[0]}, S={l[1]}-{u[1]}, V={l[2]}-{u[2]})\n"
+            info_text += "\n见 chart.png 饼图可视化结果"
             zipf.writestr("info.txt", info_text)
 
-            # 饼图
             if chart_img:
                 zipf.writestr("chart.png", chart_img)
 
